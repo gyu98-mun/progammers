@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script>
+        var arr1 = ["사과", "교대", "방배", "서초"];
+        var arr2 = ["신사", "압구정", "옥수"];
+
+        var result = arr1.join("-");
+        console.log(result); // 사과-교대-방배-서초
+
+        result = arr1.concat(arr2);
+        console.log(result); // ["사과", "교대", "방배", "서초", "신사", "압구정", "옥수"]
+
+        result = arr1.slice(1, 3);
+        console.log(result); // ["교대", "방배"]
+
+        arr1.sort();
+        console.log(arr1); // ["교대", "방배", "사과", "서초"]
+
+        arr1.reverse();
+        console.log(arr1); // ["서초", "사과", "방배", "교대"]
+
+        arr1.splice(2, 1, "강남", "역삼");
+        console.log(arr1); // ["서초", "사과", "강남", "역삼", "교대"]
+
+        var data1 = arr2.pop();
+        var data2 = arr2.shift();
+
+        arr2.push(data2);
+        console.log(arr2); // ["압구정", "신사"]
+
+        arr2.unshift(data1);
+        console.log(arr2); // ["옥수", "신사", "압구정"]
+
+    </script>
+</head>
+<body>
+    
+</body>
+</html>

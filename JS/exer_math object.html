@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script>
+        document.write("<h1>컴퓨터 가위, 바위, 보 맞추기!!</h1>");
+        var game = prompt("가위, 바위, 보 중 하나를 입력하세요:");
+        var gameNum;
+        switch (game) {
+            case "가위":
+                gameNum = 1;
+                document.write("내가 낸것 : 가위", "<br>");
+                break;
+            case "바위":
+                gameNum = 2;
+                document.write("내가 낸것 : 바위", "<br>");
+                break;
+            case "보":
+                gameNum = 3;
+                document.write("내가 낸것 : 보", "<br>");
+                break;
+            default: alert("잘못된 입력입니다. 가위, 바위, 보 중 하나를 입력하세요.");
+                location.reload();
+        }
+        var com = Math.ceil(Math.random() * 3);
+        if (com == 1) {
+            document.write("컴퓨터가 낸것 : 가위");
+        } else if (com == 2) {
+            document.write("컴퓨터가 낸것 : 바위");
+        } else if (com == 3) {
+            document.write("컴퓨터가 낸것 : 보");
+        }
+        if (gameNum == com - 2 || gameNum == com + 1) {
+            document.write("<h2>축하합니다! 이겼습니다!</h2>");
+        } else if (gameNum == com - 1 || gameNum == com + 2) {
+            document.write("<h2>아쉽지만.. 졌습니다!</h2>");
+        } else if (gameNum == com) {
+            document.write("<h2>비겼습니다!</h2>");
+        }
+        //맞추기만 하는건 재미 없으니 승/패로 넣어봣습니다
+    </script>
+</head>
+<body>
+    
+</body>
+</html>
