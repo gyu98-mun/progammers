@@ -10,7 +10,7 @@ from datetime import datetime
 # ========================================
 # 설정
 # ========================================
-API_KEY = 'AIzaSyCsSowN4QtGflYV8vYtd0dd4T5Vtq56bNE'  # ⚠️ 실제 Gemini API 키 노출 주의!
+API_KEY = 'api_key'  # ⚠️ 실제 Gemini API 키 노출 주의!
  
 RSS_URLS = [
     'https://tourkongdak.tistory.com/rss',       # 투어콩닥
