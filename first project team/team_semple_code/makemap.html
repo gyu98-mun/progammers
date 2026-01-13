@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>Travel Magazine Map</title>
+
+  <!-- OpenLayers -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol/ol.css">
+  <script src="https://cdn.jsdelivr.net/npm/ol/dist/ol.js"></script>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: sans-serif;
+    }
+
+    #app {
+      display: flex;
+      height: 100%;
+    }
+
+    #map {
+      flex: 1;
+    }
+
+    #panel {
+      width: 360px;
+      background: #fff;
+      border-left: 1px solid #ddd;
+      padding: 12px;
+      overflow-y: auto;
+    }
+
+    #panel img {
+      width: 100%;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    #topControls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: #fff;
+      padding: 8px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      z-index: 1000;
+    }
+
+    button {
+      margin: 2px;
+      padding: 6px 10px;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      background: #f9f9f9;
+      border-radius: 6px;
+    }
+
+    button.active {
+      background: #2db400;
+      color: #fff;
+      border-color: #2db400;
+    }
+
+    h3 {
+      margin-top: 0;
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <div id="map"></div>
+  <div id="panel">
+    <h3>여행 매거진</h3>
+    <p>핀을 클릭하세요</p>
+  </div>
+</div>
+
+<div id="topControls">
+  <div>
+    <b>지역</b><br>
+    <button onclick="setRegion('KR')">🇰🇷 한국</button>
+    <button onclick="setRegion('JP')">🇯🇵 일본</button>
+    <button onclick="setRegion('EU')">🇫🇷 유럽</button>
+  </div>
+  <hr>
+  <div>
+    <b>태그</b><br>
+    <button onclick="toggleTag('야경')">야경</button>
+    <button onclick="toggleTag('맛집')">맛집</button>
+    <button onclick="toggleTag('휴양')">휴양</button>
+  </div>
+</div>
+
+<script>
+/* =========================
+   1. 데이터 (매거진 + 핀)
+========================= */
+const magazines = [
+  {
+    id: 1,
+    title: "서울 야경 명소",
+    lat: 37.5512,
+    lng: 126.9882,
+    region: "KR",
+    tags: ["야경"],
+    img: "https://images.unsplash.com/photo-1549693578-d683be217e58?w=600"
+  },
+  {
+    id: 2,
+    title: "도쿄 현지 맛집",
+    lat: 35.6895,
+    lng: 139.6917,
+    region: "JP",
+    tags: ["맛집"],
+    img: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=600"
+  },
+  {
+    id: 3,
+    title: "파리 감성 산책",
+    lat: 48.8566,
+    lng: 2.3522,
+    region: "EU",
+    tags: ["야경", "휴양"],
+    img: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600"
+  },
+  {
+    id: 4,
+    title: "제주 힐링 여행",
+    lat: 33.4996,
+    lng: 126.5312,
+    region: "KR",
+    tags: ["휴양"],
+    img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600"
+  }
+];
+
+/* =========================
+   2. 상태
+========================= */
+let currentRegion = "KR";
+let activeTags = [];
+
+/* =========================
+   3. 지도 생성 (네이버 느낌)
+========================= */
+const map = new ol.Map({
+  target: 'map',
+  layers: [
+    new ol.layer.Tile({
+      source: new ol.source.XYZ({
+        url: 'https://{a-c}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png'
+      })
+    }),
+    new ol.layer.Tile({
+      source: new ol.source.XYZ({
+        url: 'https://{a-c}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png'
+      })
+    })
+  ],
+  view: new ol.View({
+    center: ol.proj.fromLonLat([126.9780, 37.5665]),
+    zoom: 12
+  })
+});
+
+/* =========================
+   4. 핀 레이어
+========================= */
+const vectorSource = new ol.source.Vector();
+const vectorLayer = new ol.layer.Vector({ source: vectorSource });
+map.addLayer(vectorLayer);
+
+const pinStyle = new ol.style.Style({
+  image: new ol.style.Circle({
+    radius: 7,
+    fill: new ol.style.Fill({ color: "#2db400" }),
+    stroke: new ol.style.Stroke({ color: "#fff", width: 2 })
+  })
+});
+
+/* =========================
+   5. 필터 적용
+========================= */
+function applyFilters() {
+  vectorSource.clear();
+
+  magazines.forEach(m => {
+    if (m.region !== currentRegion) return;
+    if (activeTags.length && !activeTags.every(t => m.tags.includes(t))) return;
+
+    const f = new ol.Feature({
+      geometry: new ol.geom.Point(
+        ol.proj.fromLonLat([m.lng, m.lat])
+      ),
+      data: m
+    });
+    f.setStyle(pinStyle);
+    vectorSource.addFeature(f);
+  });
+}
+
+/* =========================
+   6. 지역 / 태그
+========================= */
+function setRegion(region) {
+  currentRegion = region;
+  activeTags = [];
+  applyFilters();
+
+  const centers = {
+    KR: [126.9780, 37.5665],
+    JP: [139.6917, 35.6895],
+    EU: [2.3522, 48.8566]
+  };
+
+  map.getView().animate({
+    center: ol.proj.fromLonLat(centers[region]),
+    zoom: 12,
+    duration: 600
+  });
+}
+
+function toggleTag(tag) {
+  if (activeTags.includes(tag)) {
+    activeTags = activeTags.filter(t => t !== tag);
+  } else {
+    activeTags.push(tag);
+  }
+  applyFilters();
+}
+
+/* =========================
+   7. 핀 클릭 → 카드
+========================= */
+map.on('click', e => {
+  map.forEachFeatureAtPixel(e.pixel, feature => {
+    const d = feature.get('data');
+    document.getElementById('panel').innerHTML = `
+      <h3>${d.title}</h3>
+      <img src="${d.img}">
+      <p><b>지역:</b> ${d.region}</p>
+      <p><b>태그:</b> ${d.tags.join(', ')}</p>
+    `;
+  });
+});
+
+/* 초기 실행 */
+applyFilters();
+</script>
+
+</body>
+</html>
