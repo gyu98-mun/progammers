@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script>
+        var txt = "Thank you, good luck to you";
+        document.write(txt.charAt(16), "<br>");
+        document.write(txt.indexOf("you"), "<br>");
+        document.write(txt.indexOf("you", 16), "<br>");
+        document.write(txt.lastIndexOf("you"), "<br>");
+        document.write(txt.lastIndexOf("you", 25), "<br>")
+        document.write(txt.match("luck"), "<br>");
+        document.write(txt.search("you"), "<br>");
+        document.write(txt.substr(21, 4), "<br>");
+        document.write(txt.substring(6, 12), "<br>");
+        document.write(txt.replace("you","me"), "<br>");
+        document.write(txt.toLowerCase(), "<br>");
+        document.write(txt.toUpperCase(), "<br>");
+        document.write(txt.length, "<br>");
+
+        var s = txt.split(" ");
+        document.write(s[0], "<br>");
+        document.write(s[4], "<br>");
+
+        var str = "A";
+        var t = str.charCodeAt(0);
+        document.write(t, "<br>");
+        document.write(String.fromCharCode(65), "<br>");
+    </script>
+</head>
+<body>
+    
+</body>
+</html>
