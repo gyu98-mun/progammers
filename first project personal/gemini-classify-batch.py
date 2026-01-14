@@ -20,7 +20,9 @@ load_dotenv()
 API_KEYS = [
     os.getenv('GEMINI_API_KEY_1'),
     os.getenv('GEMINI_API_KEY_2'),
-    os.getenv('GEMINI_API_KEY_3')
+    os.getenv('GEMINI_API_KEY_3'),
+    os.getenv('GEMINI_API_KEY_4'),
+    os.getenv('GEMINI_API_KEY_5')
 ]
 
 # None 값 제거 (키가 없으면 제외)
@@ -76,9 +78,6 @@ def switch_api_key():
 # RSS 수집 함수
 # ========================================
 def fetch_rss(url):
-    """
-    RSS 피드에서 최신 5개 포스팅 수집
-    """
     try:
         with urlopen(url, timeout=10) as response:
             tree = ET.parse(response)
@@ -86,7 +85,7 @@ def fetch_rss(url):
         root = tree.getroot()
         posts = []
         
-        for item in root.findall('.//item')[:5]:
+        for item in root.findall('.//item'):
             title = item.findtext('title', '')
             link = item.findtext('link', '')
             description = item.findtext('description', '')
@@ -241,9 +240,6 @@ def main():
     
     # API 키 정보 출력
     print(f"🔑 사용 가능한 API 키: {len(API_KEYS)}개")
-    for idx, key in enumerate(API_KEYS, 1):
-        print(f"   키 #{idx}: {key[:10]}...{key[-5:]}")
-    print()
     
     # ========================================
     # 1단계: RSS 수집
@@ -254,7 +250,7 @@ def main():
     for idx, rss_url in enumerate(RSS_URLS, 1):
         print(f"   [{idx}/{len(RSS_URLS)}] {rss_url}")
         posts = fetch_rss(rss_url)
-        all_posts.extend(posts[:5])  # 각 RSS에서 최대 5개
+        all_posts.extend(posts) 
         print(f"       ✅ {len(posts)}개 발견!\n")
     
     print(f"📊 총 {len(all_posts)}개 포스팅 수집 완료\n")
@@ -340,48 +336,6 @@ def main():
     print(f"✅ 저장 완료!")
     print(f"   경로: {output_path}")
     print(f"   크기: {file_size:.1f} KB\n")
-    
-    # ========================================
-    # 4단계: 통계 출력
-    # ========================================
-    print("=" * 60)
-    print("📊 결과 통계")
-    print("=" * 60)
-    
-    # 지역 분포
-    regions = {}
-    for post in results:
-        region = post.get('region', '알 수 없음')
-        regions[region] = regions.get(region, 0) + 1
-    
-    print("\n📍 지역 분포:")
-    for region, count in sorted(regions.items(), key=lambda x: x[1], reverse=True):
-        print(f"   {region}: {count}개")
-    
-    # 여행 타입 분포
-    travel_types = {}
-    for post in results:
-        for t in post.get('travelType', []):
-            travel_types[t] = travel_types.get(t, 0) + 1
-    
-    print("\n🎯 여행 타입 분포:")
-    for ttype, count in sorted(travel_types.items(), key=lambda x: x[1], reverse=True):
-        print(f"   {ttype}: {count}개")
-    
-    # 계절 분포
-    seasons = {}
-    for post in results:
-        season = post.get('season', '알 수 없음')
-        seasons[season] = seasons.get(season, 0) + 1
-    
-    print("\n🌸 계절 분포:")
-    for season, count in sorted(seasons.items(), key=lambda x: x[1], reverse=True):
-        print(f"   {season}: {count}개")
-    
-    print("\n" + "=" * 60)
-    print(f"✅ 완료! 사용한 API 키: 키 #{CURRENT_KEY_INDEX + 1}")
-    print(f"⏰ 종료 시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("=" * 60)
 
 # ========================================
 # 실행
