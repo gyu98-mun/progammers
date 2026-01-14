@@ -6,14 +6,35 @@ import os
 from urllib.request import urlopen
 from xml.etree import ElementTree as ET
 from datetime import datetime
+from dotenv import load_dotenv  # ✅ 추가
+
+# ========================================
+# .env 파일 로드
+# ========================================
+load_dotenv()
 
 # ========================================
 # 설정
 # ========================================
-API_KEY = 'AIzaSyCvLe9zvt0G_ZOkvWYkHPZQB9i8PBtcrXA'  # ⚠️ 실제 Gemini API 키로 교체하세요!
+# ✅ .env에서 API 키 가져오기
+API_KEYS = [
+    os.getenv('GEMINI_API_KEY_1'),
+    os.getenv('GEMINI_API_KEY_2'),
+    os.getenv('GEMINI_API_KEY_3')
+]
+
+# None 값 제거 (키가 없으면 제외)
+API_KEYS = [key for key in API_KEYS if key]
+
+if not API_KEYS:
+    print("❌ 오류: .env 파일에 GEMINI_API_KEY_1 을 설정해주세요!")
+    exit(1)
+
+# 현재 사용 중인 키 인덱스
+CURRENT_KEY_INDEX = 0
 
 RSS_URLS = [
-    'https://tourkongdak.tistory.com/rss',  # 투어콩닥
+    'https://tourkongdak.tistory.com/rss',
 ]
 
 OUTPUT_FOLDER = r'D:\progammers\first project personal\data'
@@ -38,6 +59,18 @@ DEFAULT_LOCATION = {
     'highlights': [],
     'tags': []
 }
+
+# ========================================
+# API 키 전환 함수
+# ========================================
+def switch_api_key():
+    """
+    다음 API 키로 전환
+    """
+    global CURRENT_KEY_INDEX
+    CURRENT_KEY_INDEX = (CURRENT_KEY_INDEX + 1) % len(API_KEYS)
+    print(f"   🔄 API 키 전환 → 키 #{CURRENT_KEY_INDEX + 1}")
+    return API_KEYS[CURRENT_KEY_INDEX]
 
 # ========================================
 # RSS 수집 함수
@@ -86,12 +119,15 @@ def classify_with_gemini(title, description, retry_count=0, max_retries=3):
     """
     url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent'
     
+    # ✅ 현재 API 키 사용
+    current_key = API_KEYS[CURRENT_KEY_INDEX]
+    
     headers = {
         'Content-Type': 'application/json',
-        'x-goog-api-key': API_KEY
+        'x-goog-api-key': current_key
     }
     
-    # ✅ 프롬프트 단순화 (타임아웃 방지)
+    # 프롬프트 단순화 (타임아웃 방지)
     prompt = f"""
 여행 포스팅 분석 후 JSON만 반환:
 
@@ -152,9 +188,19 @@ JSON 형식 (이 형식 그대로):
             return location
         
         elif response.status_code == 429:
-            # Rate Limit 에러
-            if retry_count < max_retries:
-                print(f"   ⏳ Rate Limit! 재시도 {retry_count+1}/{max_retries} (60초 대기)")
+            # ✅ Rate Limit 에러 → 키 전환 시도
+            print(f"   ⏳ Rate Limit 발생! (키 #{CURRENT_KEY_INDEX + 1})")
+            
+            # 다른 키가 있으면 전환
+            if len(API_KEYS) > 1 and retry_count < len(API_KEYS):
+                new_key = switch_api_key()
+                print(f"   ⏳ 5초 대기 후 새 키로 재시도...")
+                time.sleep(5)
+                return classify_with_gemini(title, description, retry_count+1, max_retries)
+            
+            # 모든 키가 한도 초과
+            elif retry_count < max_retries:
+                print(f"   ⏳ 모든 키 한도 초과. 60초 대기 후 재시도 {retry_count+1}/{max_retries}")
                 time.sleep(60)
                 return classify_with_gemini(title, description, retry_count+1, max_retries)
             else:
@@ -193,13 +239,11 @@ def main():
     print("=" * 60)
     print(f"⏰ 시작 시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
     
-    # API 키 확인
-    if not API_KEY or API_KEY == 'your-api-key-here':
-        print("❌ 오류: API_KEY를 실제 Gemini API 키로 교체해주세요!")
-        print("   파일 상단의 API_KEY = '' 부분을 수정하세요.\n")
-        return
-    
-    print(f"🔑 API 키 확인: {API_KEY[:10]}...{API_KEY[-5:]}\n")
+    # API 키 정보 출력
+    print(f"🔑 사용 가능한 API 키: {len(API_KEYS)}개")
+    for idx, key in enumerate(API_KEYS, 1):
+        print(f"   키 #{idx}: {key[:10]}...{key[-5:]}")
+    print()
     
     # ========================================
     # 1단계: RSS 수집
@@ -232,7 +276,7 @@ def main():
         # Gemini API 호출
         location = classify_with_gemini(post['title'], post['description'])
         
-        # ✅ 결과 병합 (안전하게 .get() 사용)
+        # 결과 병합 (안전하게 .get() 사용)
         final_post = {
             'title': post['title'],
             'link': post['link'],
@@ -335,7 +379,7 @@ def main():
         print(f"   {season}: {count}개")
     
     print("\n" + "=" * 60)
-    print(f"✅ 완료! data.json 파일을 확인하세요.")
+    print(f"✅ 완료! 사용한 API 키: 키 #{CURRENT_KEY_INDEX + 1}")
     print(f"⏰ 종료 시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 60)
 
