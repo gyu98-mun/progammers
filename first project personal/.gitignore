@@ -1,0 +1,13 @@
+# API 키 보안
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# 데이터 파일
+data/*.json
+
+# 테스트 파일
+test_api.py
