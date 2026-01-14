@@ -1,4 +1,4 @@
-# Gameini 무료 토큰을 이용한 여행지 분류 배치 처리
+# Gemini 무료 토큰을 이용한 여행지 분류 배치 처리
 import requests
 import json
 import time
@@ -10,17 +10,34 @@ from datetime import datetime
 # ========================================
 # 설정
 # ========================================
-API_KEY = 'api_key'  # ⚠️ 실제 Gemini API 키 노출 주의!
- 
+API_KEY = 'AIzaSyCvLe9zvt0G_ZOkvWYkHPZQB9i8PBtcrXA'  # ⚠️ 실제 Gemini API 키로 교체하세요!
+
 RSS_URLS = [
-    'https://tourkongdak.tistory.com/rss',       # 투어콩닥
-    'https://hst123.tistory.com/rss',            # 여행 블로그
+    'https://tourkongdak.tistory.com/rss',  # 투어콩닥
 ]
 
 OUTPUT_FOLDER = r'D:\progammers\first project personal\data'
 OUTPUT_FILENAME = f'data_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
 
-WAIT_TIME = 10 # API 호출 간 대기 시간 (초)
+WAIT_TIME = 10  # API 호출 간 대기 시간 (초)
+
+# ========================================
+# 기본값 (API 실패 시 사용)
+# ========================================
+DEFAULT_LOCATION = {
+    'region': '서울/경기',
+    'city': '서울',
+    'lat': 37.5665,
+    'lon': 126.9780,
+    'travelType': ['도시'],
+    'season': '사계절',
+    'style': ['가족여행'],
+    'activities': [],
+    'budget': '보통',
+    'difficulty': None,
+    'highlights': [],
+    'tags': []
+}
 
 # ========================================
 # RSS 수집 함수
@@ -50,7 +67,7 @@ def fetch_rss(url):
             posts.append({
                 'title': title,
                 'link': link,
-                'description': description[:200],
+                'description': description[:300],  # 300자로 제한
                 'thumbnail': thumbnail
             })
         
@@ -63,35 +80,48 @@ def fetch_rss(url):
 # ========================================
 # Gemini API 분류 함수
 # ========================================
-def classify_with_gemini(title, description):
+def classify_with_gemini(title, description, retry_count=0, max_retries=3):
     """
     Gemini API를 호출해서 여행지 정보를 분류합니다.
     """
-    # ✅ 2026년 기준 최신 모델
     url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent'
     
-    # ✅ 헤더에 API 키 포함
     headers = {
         'Content-Type': 'application/json',
         'x-goog-api-key': API_KEY
     }
     
-    # 프롬프트 구성
+    # ✅ 프롬프트 단순화 (타임아웃 방지)
     prompt = f"""
-다음 여행 포스팅의 제목과 설명을 보고, 어느 지역/국가/도시에 대한 내용인지 분석해주세요.
-반드시 JSON 형식으로만 답변해주세요:
+여행 포스팅 분석 후 JSON만 반환:
 
 제목: {title}
-설명: {description[:200]}
+내용: {description}
 
-JSON 형식:
+JSON 형식 (이 형식 그대로):
 {{
-  "region": "아시아" (또는 "유럽", "미주", "오세아니아", "아프리카"),
-  "country": "국가명",
-  "city": "도시명",
-  "lat": 위도(숫자),
-  "lon": 경도(숫자)
+  "region": "경상",
+  "city": "청송",
+  "lat": 36.4367,
+  "lon": 129.0572,
+  "travelType": ["자연", "힐링"],
+  "season": "겨울",
+  "style": ["가족여행"],
+  "activities": ["등산/트레킹", "온천/스파"],
+  "budget": "보통",
+  "difficulty": "쉬움",
+  "highlights": ["장소1", "장소2", "장소3"],
+  "tags": ["태그1", "태그2", "태그3"]
 }}
+
+카테고리:
+- region: 서울/경기, 강원, 충청, 경상, 전라, 제주
+- travelType: 자연, 문화, 힐링, 액티비티, 맛집, 도시
+- season: 봄, 여름, 가을, 겨울, 사계절
+- style: 가족여행, 커플여행, 혼자여행, 친구여행
+- activities: 등산/트레킹, 사진촬영, 캠핑/글램핑, 온천/스파, 축제/이벤트, 드라이브, 카페투어, 야경감상
+- budget: 무료, 저렴, 보통, 고급
+- difficulty: 쉬움, 보통, 어려움 (액티비티 아니면 null)
 """
     
     payload = {
@@ -105,52 +135,54 @@ JSON 형식:
     }
     
     try:
-        response = requests.post(url, headers=headers, json=payload, timeout=10)
+        response = requests.post(url, headers=headers, json=payload, timeout=30)
         
         if response.status_code == 200:
             data = response.json()
             text = data['candidates'][0]['content']['parts'][0]['text']
             
+            # 디버깅: 응답 확인
+            print(f"   🔍 응답 샘플: {text[:100]}...")
+            
             # JSON 파싱 (코드 블록 제거)
             text = text.replace('```json', '').replace('```', '').strip()
             location = json.loads(text)
+            
+            print(f"   ✅ 파싱 성공")
             return location
         
         elif response.status_code == 429:
-            # Rate Limit 에러 → 10분 대기 후 재시도
-            print("⏳ Rate Limit 도달! 10분 대기 중...")
-            time.sleep(600)
-            return classify_with_gemini(title, description)
+            # Rate Limit 에러
+            if retry_count < max_retries:
+                print(f"   ⏳ Rate Limit! 재시도 {retry_count+1}/{max_retries} (60초 대기)")
+                time.sleep(60)
+                return classify_with_gemini(title, description, retry_count+1, max_retries)
+            else:
+                print(f"   ❌ 최대 재시도 초과 → 기본값 반환")
+                return DEFAULT_LOCATION
         
         else:
-            print(f"⚠️ API 오류: {response.status_code} - {response.text[:100]}")
-            return {
-                'region': '아시아',
-                'country': '한국',
-                'city': '서울',
-                'lat': 37.5665,
-                'lon': 126.9780
-            }
+            print(f"   ⚠️ API 오류: {response.status_code}")
+            return DEFAULT_LOCATION
+    
+    except requests.exceptions.Timeout:
+        # 타임아웃 에러
+        if retry_count < max_retries:
+            print(f"   ⏱️ 타임아웃! 재시도 {retry_count+1}/{max_retries} (10초 대기)")
+            time.sleep(10)
+            return classify_with_gemini(title, description, retry_count+1, max_retries)
+        else:
+            print(f"   ❌ 최대 재시도 초과 → 기본값 반환")
+            return DEFAULT_LOCATION
     
     except json.JSONDecodeError as e:
-        print(f"❌ JSON 파싱 실패: {e}")
-        return {
-            'region': '아시아',
-            'country': '한국',
-            'city': '서울',
-            'lat': 37.5665,
-            'lon': 126.9780
-        }
+        print(f"   ❌ JSON 파싱 실패: {e}")
+        print(f"   응답 내용: {text[:200]}")
+        return DEFAULT_LOCATION
     
     except Exception as e:
-        print(f"❌ API 호출 실패: {e}")
-        return {
-            'region': '아시아',
-            'country': '한국',
-            'city': '서울',
-            'lat': 37.5665,
-            'lon': 126.9780
-        }
+        print(f"   ❌ API 호출 실패: {e}")
+        return DEFAULT_LOCATION
 
 # ========================================
 # 메인 함수
@@ -160,6 +192,14 @@ def main():
     print("🌍 여행 포스팅 RSS 수집 & Gemini AI 분류 시작")
     print("=" * 60)
     print(f"⏰ 시작 시간: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+    
+    # API 키 확인
+    if not API_KEY or API_KEY == 'your-api-key-here':
+        print("❌ 오류: API_KEY를 실제 Gemini API 키로 교체해주세요!")
+        print("   파일 상단의 API_KEY = '' 부분을 수정하세요.\n")
+        return
+    
+    print(f"🔑 API 키 확인: {API_KEY[:10]}...{API_KEY[-5:]}\n")
     
     # ========================================
     # 1단계: RSS 수집
@@ -181,11 +221,6 @@ def main():
     # ========================================
     print("🤖 2단계: Gemini AI로 지역 분류 중...\n")
     
-    # API 키 확인
-    if API_KEY == 'your-api-key-here':
-        print("❌ 오류: API_KEY를 실제 Gemini API 키로 교체해주세요!")
-        return
-    
     results = []
     start_time = time.time()
     
@@ -197,27 +232,39 @@ def main():
         # Gemini API 호출
         location = classify_with_gemini(post['title'], post['description'])
         
-        # 결과 병합
+        # ✅ 결과 병합 (안전하게 .get() 사용)
         final_post = {
             'title': post['title'],
             'link': post['link'],
             'description': post['description'],
             'thumbnail': post.get('thumbnail', ''),
-            'region': location['region'],
-            'country': location['country'],
-            'city': location['city'],
-            'lat': location['lat'],
-            'lon': location['lon']
+            
+            # AI 분석 결과
+            'region': location.get('region', '서울/경기'),
+            'city': location.get('city', '서울'),
+            'lat': location.get('lat', 37.5665),
+            'lon': location.get('lon', 126.9780),
+            'travelType': location.get('travelType', []),
+            'season': location.get('season', '사계절'),
+            'style': location.get('style', []),
+            'activities': location.get('activities', []),
+            'budget': location.get('budget', '보통'),
+            'difficulty': location.get('difficulty', None),
+            'highlights': location.get('highlights', []),
+            'tags': location.get('tags', [])
         }
         
         results.append(final_post)
         
         # 결과 출력
-        print(f"       → {location['region']} / {location['country']} / {location['city']}")
-        print(f"       → 좌표: ({location['lat']}, {location['lon']})\n")
+        print(f"       → {final_post['region']} / {final_post['city']}")
+        print(f"       → 좌표: ({final_post['lat']}, {final_post['lon']})")
+        print(f"       → 타입: {', '.join(final_post['travelType'])}")
+        print(f"       → 태그: {', '.join(final_post['tags'][:3])}\n")
         
-        # ✅ Rate Limit 회피: 대기 시간
+        # Rate Limit 회피: 대기 시간
         if idx < len(all_posts):
+            print(f"   ⏳ {WAIT_TIME}초 대기...\n")
             time.sleep(WAIT_TIME)
     
     elapsed_time = time.time() - start_time
@@ -227,7 +274,7 @@ def main():
     # ========================================
     # 3단계: JSON 파일 저장
     # ========================================
-    print("💾 3단계: data.json 저장 중...")
+    print("💾 3단계: JSON 저장 중...")
     
     os.makedirs(OUTPUT_FOLDER, exist_ok=True)
     output_path = os.path.join(OUTPUT_FOLDER, OUTPUT_FILENAME)
@@ -237,7 +284,8 @@ def main():
         'metadata': {
             'total_count': len(results),
             'generated_at': datetime.now().isoformat(),
-            'rss_sources': RSS_URLS
+            'rss_sources': RSS_URLS,
+            'version': '2.0'
         }
     }
     
@@ -266,15 +314,25 @@ def main():
     for region, count in sorted(regions.items(), key=lambda x: x[1], reverse=True):
         print(f"   {region}: {count}개")
     
-    # 국가 분포 (상위 5개)
-    countries = {}
+    # 여행 타입 분포
+    travel_types = {}
     for post in results:
-        country = post.get('country', '알 수 없음')
-        countries[country] = countries.get(country, 0) + 1
+        for t in post.get('travelType', []):
+            travel_types[t] = travel_types.get(t, 0) + 1
     
-    print("\n🌏 국가 분포 (상위 5개):")
-    for country, count in sorted(countries.items(), key=lambda x: x[1], reverse=True)[:5]:
-        print(f"   {country}: {count}개")
+    print("\n🎯 여행 타입 분포:")
+    for ttype, count in sorted(travel_types.items(), key=lambda x: x[1], reverse=True):
+        print(f"   {ttype}: {count}개")
+    
+    # 계절 분포
+    seasons = {}
+    for post in results:
+        season = post.get('season', '알 수 없음')
+        seasons[season] = seasons.get(season, 0) + 1
+    
+    print("\n🌸 계절 분포:")
+    for season, count in sorted(seasons.items(), key=lambda x: x[1], reverse=True):
+        print(f"   {season}: {count}개")
     
     print("\n" + "=" * 60)
     print(f"✅ 완료! data.json 파일을 확인하세요.")
