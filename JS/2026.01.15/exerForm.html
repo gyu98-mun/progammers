@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Document</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script>
+        $(document).ready(function(){
+            var email = $("#email").val();
+            $("#email").val("Email 입니다")
+
+            $("#jobs").on("change", function(){
+                // alert($("#jobs option:selected").text());
+                console.log("jobs 옵션값 : " + $("#jobs option:selected").val());
+                console.log("jobs 옵션 TEXT : " + $("#jobs option:selected").text());
+            });
+
+            console.log($("input[type=radio][name=age]:checked").length);
+            console.log($("input[type=checkbox][name=hobby]:checked").length);
+
+            $("input[type=checkbox][name=age]").eq(1).prop("checked", true);
+            $("input[type=checkbox][name=hobby]").eq(1).prop("checked", true);
+
+            $("#age").on("click", function(){
+                var checked = $(this).prop("checked");
+                console.log("전체선택 : " + checked);
+                if(checked){
+                    $("input[type=checkbox][name=age]").prop("checked", true);
+                } else {
+                    $("input[type=checkbox][name=age]").prop("checked", false);
+                }
+            });
+        });
+    </script>
+
+</head>
+<body>
+    <div>
+        <label for="email">이메일</label>
+        <hr/>
+        <input type="email" id="email" placeholder="이메일을 입력하세요"/><br/>
+        <br/>
+    </div>
+    <div>
+        <label for="jobs">직업</label>
+        <select id="jobs">
+            <option value="0">선택하세요</option>
+            <option value="1">회사원</option>
+            <option value="2">학생</option>
+            <option value="3">교수</option>
+        </select>
+    </div>
+    <div>
+        <span class="title">연령대</span><hr/>
+        <label for="age">전체선택</label>
+        <input type="checkbox" name="age" id="age" value="0"><br/>
+        <label for="age10">10대</label>
+        <input type="checkbox" name="age" id="age10" value="10">
+        <label for="age20">20대</label>
+        <input type="checkbox" name="age" id="age20" value="20">
+        <label for="age30">30대</label>
+        <input type="checkbox" name="age" id="age30" value="30">
+        <label for="age40">40대</label>
+        <input type="checkbox" name="age" id="age40" value="40">
+        <label for="age50">50대</label>
+        <input type="checkbox" name="age" id="age50" value="50"><br/>
+    </div>
+</body>
+</html>
