@@ -9,6 +9,20 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@600;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./styles.css" />
+  <script type="text/javascript" src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+  <script>
+    $(function() {
+      $.ajax({
+        url:"data.json",
+        dataType:"json",
+        success:function(data) {
+            const {season, style} = data.posts[0];
+            $("#season").text(season);
+            $("#style").text(style);
+          }
+        });                                                                  
+    });
+  </script>
 </head>
 <body>
   <header class="header">
@@ -100,8 +114,8 @@
                 <button class="chip" type="button">#겨울</button>
                 <button class="chip" type="button">#감성</button>
               </div>
-              <h3 class="card__title">겨울 감성 여행</h3>
-              <p class="card__desc">따뜻한 실내/야경 중심의 루트</p>
+              <h3 class="card__title" id="season">겨울 감성 여행</h3>
+              <p class="card__desc" id="style">따뜻한 실내/야경 중심의 루트</p>
             </div>
           </article>
 

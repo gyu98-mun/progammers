@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>매거진 상세페이지</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.5;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 500;
+      line-height: 1.2;
+    }
+
+    h2 {
+      font-size: 1.875rem;
+      font-weight: 600;
+      margin-top: 2em;
+      margin-bottom: 1em;
+    }
+
+    h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-top: 1.6em;
+      margin-bottom: 0.6em;
+    }
+
+    .prose {
+      max-width: 65ch;
+      color: #111;
+      font-size: 1.125rem;
+      line-height: 1.75;
+    }
+
+    .prose p {
+      margin-bottom: 1.25em;
+    }
+
+    .prose ul {
+      margin-top: 1.25em;
+      margin-bottom: 1.25em;
+      list-style-type: disc;
+      padding-left: 1.625em;
+    }
+
+    .prose li {
+      margin-top: 0.5em;
+      margin-bottom: 0.5em;
+      padding-left: 0.375em;
+    }
+
+    .prose blockquote {
+      margin-top: 1.6em;
+      margin-bottom: 1.6em;
+      padding-left: 1em;
+      font-style: italic;
+      border-left: 4px solid #111;
+      font-size: 1.25rem;
+    }
+
+    .prose strong {
+      font-weight: 600;
+    }
+
+    .navbar-title {
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: all 0.3s ease;
+    }
+
+    .navbar-title.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .icon {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .heart-filled {
+      fill: currentColor;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem;
+      border-radius: 0.375rem;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .btn:hover {
+      background-color: #f3f4f6;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      background-color: #000;
+      color: white;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+    }
+
+    .card {
+      border-radius: 0.5rem;
+      overflow: hidden;
+      background: white;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      transition: box-shadow 0.3s;
+      cursor: pointer;
+    }
+
+    .card:hover {
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .card:hover img {
+      transform: scale(1.05);
+    }
+
+    .card img {
+      transition: transform 0.3s;
+    }
+  </style>
+</head>
+<body class="bg-white">
+  <!-- Fixed Navigation Bar -->
+  <header class="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+      <div class="flex items-center justify-between h-16">
+        <!-- Left side - Back & Home buttons -->
+        <div class="flex items-center gap-2">
+          <button class="btn" onclick="window.history.back()">
+            <svg class="icon" viewBox="0 0 24 24">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          <button class="btn" onclick="window.location.href='/'">
+            <svg class="icon" viewBox="0 0 24 24">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Center - Title & Subtitle (visible on scroll) -->
+        <div id="navbarTitle" class="flex-1 mx-4 overflow-hidden navbar-title">
+          <h2 class="truncate text-sm sm:text-base font-medium">모던한 공간에서 찾는 영감: 일상을 바꾸는 디자인 철학</h2>
+          <p class="truncate text-xs text-gray-500 hidden sm:block">
+            공간이 우리의 삶에 미치는 영향과 미니멀리즘이 주는 새로운 가치에 대한 탐구
+          </p>
+        </div>
+
+        <!-- Right side - Action buttons -->
+        <div class="flex items-center gap-2">
+          <button class="btn" onclick="handleSearch()">
+            <svg class="icon" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
+          </button>
+          <button class="btn" onclick="handleShare()">
+            <svg class="icon" viewBox="0 0 24 24">
+              <circle cx="18" cy="5" r="3"/>
+              <circle cx="6" cy="12" r="3"/>
+              <circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+          </button>
+          <button id="likeBtn" class="btn" onclick="handleLike()">
+            <svg id="heartIcon" class="icon" viewBox="0 0 24 24">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section with Article Header -->
+  <div class="w-full pt-16">
+    <!-- Hero Image -->
+    <div class="relative w-full h-[60vh] min-h-[400px] max-h-[700px] overflow-hidden bg-gray-100">
+      <img
+        src="https://images.unsplash.com/photo-1626722850409-004d2774ae8e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtYWdhemluZSUyMGVkaXRvcmlhbCUyMHBob3RvZ3JhcGh5fGVufDF8fHx8MTc2ODQ3ODIxMnww&ixlib=rb-4.1.0&q=80&w=1080"
+        alt="Magazine Hero"
+        class="w-full h-full object-cover"
+      />
+      <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+    </div>
+
+    <!-- Article Header Card -->
+    <div class="max-w-4xl mx-auto px-6 -mt-32 relative z-10">
+      <div class="bg-white rounded-lg shadow-2xl p-8 md:p-12">
+        <!-- Category Badge -->
+        <span class="badge mb-4">라이프스타일</span>
+
+        <!-- Title -->
+        <h1 class="mb-4">
+          모던한 공간에서 찾는 영감: 일상을 바꾸는 디자인 철학
+        </h1>
+
+        <!-- Subtitle -->
+        <p class="text-gray-600 mb-8 text-xl">
+          공간이 우리의 삶에 미치는 영향과 미니멀리즘이 주는 새로운 가치에 대한 탐구
+        </p>
+
+        <!-- Meta Information -->
+        <div class="flex flex-wrap items-center gap-4 pt-6 border-t border-gray-200">
+          <!-- Author -->
+          <div class="flex items-center gap-3">
+            <img
+              src="https://images.unsplash.com/photo-1680356475155-3ca8fa2192aa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwb3J0cmFpdCUyMGF1dGhvciUyMHdyaXRlcnxlbnwxfHx8fDE3Njg0NzgyMTN8MA&ixlib=rb-4.1.0&q=80&w=1080"
+              alt="김지은"
+              class="h-12 w-12 rounded-full object-cover"
+            />
+            <div>
+              <p class="text-sm text-gray-500">Written by</p>
+              <p class="font-medium">김지은</p>
+            </div>
+          </div>
+
+          <!-- Date and Read Time -->
+          <div class="flex items-center gap-4 ml-auto">
+            <div class="flex items-center gap-2 text-gray-600">
+              <svg class="icon w-4 h-4" viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              <span class="text-sm">2026년 1월 15일</span>
+            </div>
+            <span class="text-gray-600 text-sm">8분 읽기</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Article Content -->
+  <div class="max-w-4xl mx-auto px-6 py-12">
+    <div class="prose max-w-none">
+      <p class="text-xl text-gray-700 mb-6">
+        우리가 매일 보내는 공간은 단순한 물리적 장소가 아닙니다. 그것은 우리의 생각과
+        감정, 그리고 삶의 방식에 깊은 영향을 미치는 환경입니다. 현대 사회에서 공간
+        디자인은 더 이상 선택이 아닌 필수가 되었습니다.
+      </p>
+
+      <h2>공간이 말하는 언어</h2>
+      <p>
+        좋은 디자인은 조용히 말을 합니다. 화려한 장식이나 과도한 요소 없이도 공간은
+        자신만의 이야기를 전달할 수 있습니다. 미니멀리즘이 주목받는 이유도 바로
+        여기에 있습니다. 불필요한 것을 제거하고 본질에 집중함으로써, 우리는 더 명확한
+        메시지를 전달받고 더 깊은 경험을 할 수 있습니다.
+      </p>
+
+      <p>
+        유명 건축가 미스 반 데어 로에(Mies van der Rohe)가 말했듯이, "적은 것이 더
+        많은 것이다(Less is more)." 이 문구는 현대 디자인의 핵심 철학을 담고
+        있습니다.
+      </p>
+
+      <h2>기능과 미학의 조화</h2>
+      <p>
+        아름다움과 실용성은 결코 분리될 수 없습니다. 최고의 디자인은 둘 사이의
+        완벽한 균형을 이루는 것입니다. 스칸디나비아 디자인이 전 세계적으로 사랑받는
+        이유는 바로 이러한 조화를 완벽하게 구현하기 때문입니다.
+      </p>
+
+      <ul>
+        <li>
+          <strong>기능성:</strong> 모든 요소가 명확한 목적을 가지고 있어야 합니다.
+        </li>
+        <li>
+          <strong>단순함:</strong> 복잡함을 줄이고 본질에 집중합니다.
+        </li>
+        <li>
+          <strong>자연스러움:</strong> 자연 소재와 빛을 최대한 활용합니다.
+        </li>
+        <li>
+          <strong>지속가능성:</strong> 환경을 고려한 디자인 선택이 중요합니다.
+        </li>
+      </ul>
+
+      <h2>일상을 바꾸는 작은 변화</h2>
+      <p>
+        공간을 재구성하는 것은 생각보다 어렵지 않습니다. 작은 변화부터 시작해보세요.
+        불필요한 물건을 정리하고, 자연광이 잘 들어오도록 창문 주변을 정리하고,
+        식물을 배치하는 것만으로도 공간의 분위기는 크게 달라집니다.
+      </p>
+
+      <p>
+        특히 재택근무가 일상화된 지금, 업무 공간과 휴식 공간의 구분은 더욱 중요해졌습니다.
+        명확한 경계를 설정하고, 각 공간에 맞는 조명과 가구를 배치하여 생산성과 휴식의
+        질을 모두 높일 수 있습니다.
+      </p>
+
+      <blockquote>
+        "디자인은 단순히 보이는 것과 느껴지는 것이 아니다. 그것이 어떻게 작동하는가가
+        중요하다." — 스티브 잡스
+      </blockquote>
+
+      <h2>미래를 향한 디자인</h2>
+      <p>
+        디자인의 미래는 지속가능성에 있습니다. 환경을 생각하는 소재 선택, 에너지
+        효율을 고려한 설계, 그리고 오래도록 사랑받을 수 있는 타임리스한 디자인이
+        앞으로의 방향성입니다.
+      </p>
+
+      <p>
+        우리가 만드는 공간은 단순히 현재를 위한 것이 아닙니다. 그것은 미래 세대를
+        위한 유산이기도 합니다. 따라서 우리의 모든 선택은 더 신중하고 책임감 있게
+        이루어져야 합니다.
+      </p>
+
+      <h2>결론</h2>
+      <p>
+        공간 디자인은 우리 삶의 질을 향상시키는 강력한 도구입니다. 미니멀리즘의
+        철학을 받아들이고, 기능과 미학의 균형을 추구하며, 지속가능한 선택을 한다면,
+        우리는 더 나은 일상을 만들어갈 수 있습니다.
+      </p>
+
+      <p>
+        오늘부터 여러분의 공간을 다시 바라보세요. 그리고 작은 변화를 시작해보세요.
+        그 변화가 여러분의 삶을 어떻게 바꾸는지 경험하게 될 것입니다.
+      </p>
+    </div>
+  </div>
+
+  <!-- Related Articles -->
+  <div class="bg-gray-50 py-16">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="flex items-center justify-between mb-8">
+        <h2 class="text-3xl font-medium">관련 기사</h2>
+        <button class="btn flex items-center gap-2">
+          더보기
+          <svg class="icon w-4 h-4" viewBox="0 0 24 24">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Article 1 -->
+        <article class="card">
+          <div class="relative h-48 overflow-hidden">
+            <img
+              src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBpbnRlcmlvciUyMGRlc2lnbnxlbnwxfHx8fDE3NjgzOTM2MDZ8MA&ixlib=rb-4.1.0&q=80&w=1080"
+              alt="Article"
+              class="w-full h-full object-cover"
+            />
+          </div>
+          <div class="p-6">
+            <span class="inline-block px-3 py-1 text-xs border border-gray-300 rounded-full mb-3">인테리어</span>
+            <h3 class="text-lg font-medium mb-2 line-clamp-2">
+              작은 공간을 위한 스마트한 인테리어 솔루션
+            </h3>
+            <p class="text-gray-600 text-sm mb-4 line-clamp-3">
+              제한된 공간에서도 충분히 쾌적하고 스타일리시한 환경을 만들 수 있는 실용적인 아이디어들을 소개합니다.
+            </p>
+            <span class="text-xs text-gray-500">5분 읽기</span>
+          </div>
+        </article>
+
+        <!-- Article 2 -->
+        <article class="card">
+          <div class="relative h-48 overflow-hidden">
+            <img
+              src="https://images.unsplash.com/photo-1632613714614-e817d3814a8e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmYXNoaW9uJTIwbGlmZXN0eWxlJTIwcGhvdG9ncmFwaHl8ZW58MXx8fHwxNzY4NDc4MjEzfDA&ixlib=rb-4.1.0&q=80&w=1080"
+              alt="Article"
+              class="w-full h-full object-cover"
+            />
+          </div>
+          <div class="p-6">
+            <span class="inline-block px-3 py-1 text-xs border border-gray-300 rounded-full mb-3">패션</span>
+            <h3 class="text-lg font-medium mb-2 line-clamp-2">
+              2026 봄/여름 트렌드: 지속 가능한 패션의 시대
+            </h3>
+            <p class="text-gray-600 text-sm mb-4 line-clamp-3">
+              환경을 생각하는 패션 브랜드들이 제시하는 새로운 스타일과 가치관을 탐구합니다.
+            </p>
+            <span class="text-xs text-gray-500">6분 읽기</span>
+          </div>
+        </article>
+
+        <!-- Article 3 -->
+        <article class="card">
+          <div class="relative h-48 overflow-hidden">
+            <img
+              src="https://images.unsplash.com/photo-1643875402004-22631ef914aa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx1cmJhbiUyMGFyY2hpdGVjdHVyZSUyMGNpdHl8ZW58MXx8fHwxNzY4NDc4MjE0fDA&ixlib=rb-4.1.0&q=80&w=1080"
+              alt="Article"
+              class="w-full h-full object-cover"
+            />
+          </div>
+          <div class="p-6">
+            <span class="inline-block px-3 py-1 text-xs border border-gray-300 rounded-full mb-3">건축</span>
+            <h3 class="text-lg font-medium mb-2 line-clamp-2">
+              도시 속 건축물이 만들어내는 새로운 풍경
+            </h3>
+            <p class="text-gray-600 text-sm mb-4 line-clamp-3">
+              현대 건축이 도시의 정체성을 어떻게 형성하고 있는지 살펴봅니다.
+            </p>
+            <span class="text-xs text-gray-500">7분 읽기</span>
+          </div>
+        </article>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-white py-12">
+    <div class="max-w-7xl mx-auto px-6 text-center">
+      <p class="text-gray-400">© 2026 Magazine. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Navbar scroll effect
+    window.addEventListener('scroll', function() {
+      const navbarTitle = document.getElementById('navbarTitle');
+      if (window.scrollY > 300) {
+        navbarTitle.classList.add('visible');
+      } else {
+        navbarTitle.classList.remove('visible');
+      }
+    });
+
+    // Like button functionality
+    let isLiked = false;
+    function handleLike() {
+      isLiked = !isLiked;
+      const likeBtn = document.getElementById('likeBtn');
+      const heartIcon = document.getElementById('heartIcon');
+      
+      if (isLiked) {
+        likeBtn.classList.add('text-red-500');
+        heartIcon.classList.add('heart-filled');
+      } else {
+        likeBtn.classList.remove('text-red-500');
+        heartIcon.classList.remove('heart-filled');
+      }
+    }
+
+    // Search functionality
+    function handleSearch() {
+      alert('검색 기능');
+    }
+
+    // Share functionality
+    function handleShare() {
+      if (navigator.share) {
+        navigator.share({
+          title: '모던한 공간에서 찾는 영감: 일상을 바꾸는 디자인 철학',
+          text: '공간이 우리의 삶에 미치는 영향과 미니멀리즘이 주는 새로운 가치에 대한 탐구',
+          url: window.location.href
+        }).catch(err => console.log('공유 실패:', err));
+      } else {
+        alert('공유 기능');
+      }
+    }
+  </script>
+</body>
+</html>
