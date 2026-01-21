@@ -26,6 +26,16 @@ let currentKeyIndex = 0;
 app.use(express.json());
 app.use(express.static(__dirname));
 
+// 시스템 메시지 - AI의 행동 지침
+const SYSTEM_INSTRUCTION = `
+    1. 너는 여행 계획 짜는 것을 도와주는 AI 야.
+    2. 사용자에게 항상 친절하게 대하고, 대답은 300자 내로 답해줘.
+    3. 만약 로컬 JSON 데이터가 주어지면 그 내용을 최우선으로 참고해서 대답해줘.
+    4. 가독성을 위해 문단 사이에는 빈 줄을 추가해줘
+    5. 중요한 키워드는 굵게 표시해줘.
+    6. 목록이 필요하면 숫자나 글머리 기호를 사용하고 각 항목은 줄 바꿈으로 구분해줘.
+`;
+
 // ---------------------------------------------------------
 
 // 2. [MAIN LOOP / ROUTES]
@@ -38,7 +48,7 @@ app.post("/chat", async (req, res) => {
     console.log(`[시스템] 2.5 Flash 모델로 시도 중...`);
     
     try {
-        const aiResponse = await getAiResponseWithFailover(userMessage);
+        const aiResponse = await getAiResponseWithFailover(userMessage, SYSTEM_INSTRUCTION);
         res.json({ reply: aiResponse });
     } catch (criticalError) {
         console.error("Critical Server Error:", criticalError);
@@ -50,11 +60,16 @@ app.listen(PORT, () => console.log(`http://localhost:${PORT}`));
 
 // ---------------------------------------------------------
 
+/**
+ * @param {string} prompt - 사용자 질문
+ * @param {string} instruction - [인자 출처: SYSTEM_INSTRUCTION]
+ */
+
 // 3. [FUNCTION DECLARATION]
-async function getAiResponseWithFailover(prompt) {
+async function getAiResponseWithFailover(prompt, instruction) {
     for (let i = 0; i < API_KEYS.length; i++) {
         const activeKey = API_KEYS[currentKeyIndex];
-        const result = await callGeminiApi(activeKey, prompt);
+        const result = await callGeminiApi(activeKey, prompt, instruction);
 
         if (!result.isError) return result.text;
 
@@ -64,11 +79,14 @@ async function getAiResponseWithFailover(prompt) {
     return "모든 API 키가 실패했습니다.";
 }
 
-async function callGeminiApi(key, text) {
+
+async function callGeminiApi(key, text, instruction) {
     try {
         const genAI = new GoogleGenerativeAI(key);
-        // 모델명 2.5 Flash 적용
-        const model = genAI.getGenerativeModel({ model: TARGET_MODEL });
+        const model = genAI.getGenerativeModel({ 
+            model: TARGET_MODEL,
+            systemInstruction: instruction
+         });
         const result = await model.generateContent(text);
         return { isError: false, text: result.response.text() };
     } catch (error) {

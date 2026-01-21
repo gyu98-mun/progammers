@@ -5,6 +5,7 @@ const userInput = document.getElementById('user-input');
 const sendButton = document.getElementById('send-button');
 const inputContainer = document.getElementById('input-container');
 
+
 // ---------------------------------------------------------
 
 // 2. [MAIN LOOP] - 이벤트 리스너 (엔터키 반응 포함)
@@ -66,8 +67,9 @@ function setLoading(isLoading) {
 
 function addMessage(sender, text) {
     const div = document.createElement('div');
+    const content = (sender === 'ai') ? marked.parse(text) : text;
     div.className = `message ${sender}`;
-    div.innerHTML = `<div class="message-bubble">${text}</div>`;
+    div.innerHTML = `<div class="message-bubble">${content}</div>`;
     chatContainer.appendChild(div);
     chatContainer.scrollTop = chatContainer.scrollHeight;
 }
