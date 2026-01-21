@@ -1,8 +1,8 @@
-import Say from "./ex03/Say";
+import EventEx from "./ex04/EventEx";
 
 function App() {
   return (
-    <Say />
+    <EventEx />
   );
 }
 
