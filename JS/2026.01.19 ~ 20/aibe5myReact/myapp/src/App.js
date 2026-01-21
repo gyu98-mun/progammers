@@ -1,8 +1,8 @@
-import EventEx from "./ex04/EventEx";
+import Info from './ex05/Info';
 
 function App() {
   return (
-    <EventEx />
+    <Info />
   );
 }
 
